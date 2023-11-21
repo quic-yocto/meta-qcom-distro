@@ -1,0 +1,9 @@
+require qcom-multimedia-full-image.bb
+
+SUMMARY = "Test multimedia image with ptest"
+
+LICENSE = "BSD-3-Clause-Clear"
+
+IMAGE_ROOTFS_EXTRA_SPACE = "1048576"
+
+EXTRA_IMAGE_FEATURES:append = " ptest-pkgs"
