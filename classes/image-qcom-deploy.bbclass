@@ -123,27 +123,16 @@ do_deploy_fixup () {
         install -m 0644 $mbnfile .
     done
 
-    # copy sec.dat
-    if [ -f ${DEPLOY_DIR_IMAGE}/sec.dat ]; then
-        install -m 0644 ${DEPLOY_DIR_IMAGE}/sec.dat sec.dat
-    fi
-
     # copy logfs_ufs_8mb.bin
     if [ -f ${DEPLOY_DIR_IMAGE}/logfs_ufs_8mb.bin ]; then
         install -m 0644 ${DEPLOY_DIR_IMAGE}/logfs_ufs_8mb.bin logfs_ufs_8mb.bin
     fi
-
-    for fvfile in ${DEPLOY_DIR_IMAGE}/*.fv; do
-        if [ -f "$fvfile" ]; then
-            install -m 0644 $fvfile .
-        fi
-    done
 
     for patchfile in ${DEPLOY_DIR_IMAGE}/patch*.xml; do
         install -m 0644 $patchfile .
     done
 
     #Install qdl
-    install -m 0644 ${STAGING_BINDIR_NATIVE}/qdl .
+    install -m 0755 ${STAGING_BINDIR_NATIVE}/qdl .
 }
 addtask do_deploy_fixup after do_image_complete before do_build
