@@ -39,6 +39,16 @@ do_gen_partition_bins() {
         -i ${STAGING_ETCDIR_NATIVE}/partitions.conf \
         -o ${PARTBINS_DEPLOYDIR}/partition.xml
 
+    rm -f ${DEPLOY_DIR_IMAGE}/gpt_backup?.bin
+    rm -f ${DEPLOY_DIR_IMAGE}/gpt_both?.bin
+    rm -f ${DEPLOY_DIR_IMAGE}/gpt_empty?.bin
+    rm -f ${DEPLOY_DIR_IMAGE}/gpt_main?.bin
+    rm -f ${DEPLOY_DIR_IMAGE}/patch?.xml
+    rm -f ${DEPLOY_DIR_IMAGE}/rawprogram?*.xml
+    rm -f ${DEPLOY_DIR_IMAGE}/partition.xml
+    rm -f ${DEPLOY_DIR_IMAGE}/zeros_*.bin
+    rm -f ${DEPLOY_DIR_IMAGE}/wipe_rawprogram_PHY?.xml
+
     # Step2: Call ptool to generate partition bins
     cd ${PARTBINS_DEPLOYDIR} && ${STAGING_BINDIR_NATIVE}/ptool.py -x partition.xml
 }
@@ -114,7 +124,7 @@ do_deploy_fixup () {
         install -m 0644 $rawpg .
     done
 
-    #Copy the .elf, .mbn, .fv files
+    #Copy the .elf, .mbn files
     for elffile in ${DEPLOY_DIR_IMAGE}/*.elf; do
         install -m 0644 $elffile .
     done
@@ -136,3 +146,50 @@ do_deploy_fixup () {
     install -m 0755 ${STAGING_BINDIR_NATIVE}/qdl .
 }
 addtask do_deploy_fixup after do_image_complete before do_build
+
+# Merge tech dtbos before generating boot.img
+do_merge_dtbos[nostamp] = "1"
+do_merge_dtbos[cleandirs] = "${DEPLOY_DIR_IMAGE}/DTOverlays"
+do_merge_dtbos[depends] += "dtc-native:do_populate_sysroot virtual/kernel:do_deploy"
+
+python do_merge_dtbos () {
+    import os, shutil, subprocess
+
+    fdtoverlay_bin = d.getVar('STAGING_BINDIR_NATIVE') + "/fdtoverlay"
+    dtbotpdir = d.getVar('DEPLOY_DIR_IMAGE') + "/" + "tech_dtbs"
+    dtoverlaydir = d.getVar('DEPLOY_DIR_IMAGE') + "/" + "DTOverlays"
+    os.makedirs(dtbotpdir, exist_ok=True)
+
+    for kdt in d.getVar("KERNEL_DEVICETREE").split():
+        org_kdtb = os.path.join(d.getVar('DEPLOY_DIR_IMAGE'), os.path.basename(kdt))
+
+        # Rename and copy original kernel devicetree files
+        kdtb = os.path.basename(org_kdtb) + ".0"
+        shutil.copy2(org_kdtb, os.path.join(dtbotpdir, kdtb))
+
+        # Find  and append matching dtbos for each dtb
+        dtb = os.path.basename(org_kdtb)
+        dtb_name = dtb.rsplit('.', 1)[0]
+        dtbo_list =(d.getVarFlag('KERNEL_TECH_DTBOS', dtb_name) or "").split()
+        bb.debug(1, "%s dtbo_list: %s" % (dtb_name, dtbo_list))
+        dtbos_found = 0
+        for dtbo_file in dtbo_list:
+            dtbos_found += 1
+            dtbo = os.path.join(dtbotpdir, dtbo_file)
+            pre_kdtb = os.path.join(dtbotpdir, dtb + "." + str(dtbos_found - 1))
+            post_kdtb = os.path.join(dtbotpdir, dtb + "." + str(dtbos_found))
+            cmd = fdtoverlay_bin + " -v -i "+ pre_kdtb +" "+ dtbo +" -o "+ post_kdtb
+            bb.debug(1, "merge_dtbos cmd: %s" % (cmd))
+            try:
+                subprocess.check_output(cmd, shell=True)
+            except RuntimeError as e:
+                bb.error("cmd: %s failed with error %s" % (cmd, str(e)))
+        if dtbos_found == 0:
+            bb.debug(1, "No tech dtbos to merge into %s" % dtb)
+
+        #Copy latest overlayed file into DTOverlays path
+        output = dtb + "." + str(dtbos_found)
+        shutil.copy2(os.path.join(dtbotpdir, output), dtoverlaydir)
+        os.symlink(os.path.join(dtoverlaydir, output), os.path.join(dtoverlaydir, dtb))
+}
+addtask merge_dtbos before do_image after do_rootfs

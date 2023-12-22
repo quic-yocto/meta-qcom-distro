@@ -11,6 +11,15 @@ REQUIRED_DISTRO_FEATURES = "pam systemd"
 
 CORE_IMAGE_BASE_INSTALL += " \
     kernel-modules \
+    resize-partitions \
+    packagegroup-filesystem-utils \
 "
 
-EXTRA_IMAGE_FEATURES += " overlayfs-etc"
+CORE_IMAGE_EXTRA_INSTALL += "overlayfs-qcom-paths"
+
+EXTRA_USERS_PARAMS = "\
+    useradd -r -s /bin/false system; \
+    "
+
+# Adding kernel-devsrc to provide kernel development support on SDK
+TOOLCHAIN_TARGET_TASK += "kernel-devsrc"

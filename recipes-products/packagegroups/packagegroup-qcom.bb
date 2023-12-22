@@ -17,7 +17,10 @@ PACKAGES = ' \
 
 RDEPENDS:packagegroup-qcom = "\
     packagegroup-filesystem-utils \
+    packagegroup-qcom-core \
     packagegroup-support-utils \
+    modemmanager \
+    packagegroup-qcom-initscripts \
     "
 
 RDEPENDS:packagegroup-support-utils = "\
