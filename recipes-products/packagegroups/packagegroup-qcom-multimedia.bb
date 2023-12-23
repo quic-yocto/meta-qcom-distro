@@ -15,6 +15,7 @@ PACKAGES = ' \
 
 RDEPENDS:packagegroup-qcom-multimedia = "\
     packagegroup-qcom-audio \
+    packagegroup-qcom-bluetooth \
     packagegroup-qcom-camera \
     packagegroup-qcom-display \
     packagegroup-qcom-fastcv \
