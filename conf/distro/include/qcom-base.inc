@@ -23,9 +23,13 @@ PACKAGECONFIG:append:pn-systemd = " resolved networkd"
 # Avoid to duplicate the rootfs tarball by generating both tar.gz/tar.xz
 IMAGE_FSTYPES:remove = "tar.gz"
 
+# Fastboot expects an ext4 image, which needs to be 4096 aligned
+IMAGE_FSTYPES = "ext4"
+IMAGE_ROOTFS_ALIGNMENT = "4096"
+
 # Pull in the initrd image by default
 INITRAMFS_IMAGE_BUNDLE ?= "1"
-INITRAMFS_IMAGE = "initramfs-test-full-image"
+INITRAMFS_IMAGE = "initramfs-qcom-image"
 
 INHERIT += "buildhistory"
 INHERIT += "image-buildinfo"
