@@ -10,17 +10,18 @@ inherit packagegroup
 PROVIDES = "${PACKAGES}"
 
 PACKAGES = ' \
-    packagegroup-qcom \
+    ${PN} \
     packagegroup-filesystem-utils \
     packagegroup-support-utils \
     '
 
-RDEPENDS:packagegroup-qcom = "\
+RDEPENDS:${PN} = "\
     packagegroup-filesystem-utils \
     packagegroup-qcom-core \
     packagegroup-support-utils \
     modemmanager \
     packagegroup-qcom-initscripts \
+    packagegroup-qcom-wifi \
     "
 
 RDEPENDS:packagegroup-support-utils = "\
@@ -29,6 +30,7 @@ RDEPENDS:packagegroup-support-utils = "\
     libinput-bin \
     libnl \
     libxml2 \
+    procps \
     "
 
 RDEPENDS:packagegroup-filesystem-utils = "\

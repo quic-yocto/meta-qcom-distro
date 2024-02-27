@@ -51,11 +51,14 @@ INHERIT += "uninative"
 # GCC Version
 GCCVERSION = "11.4%"
 
-#Selinux support
+# Selinux support
 DISTRO_FEATURES_FILTER_NATIVE:append = " selinux"
 DISTRO_FEATURES_FILTER_NATIVESDK:append = " selinux"
 DISTRO_EXTRA_RDEPENDS:append = " ${@bb.utils.contains('DISTRO_FEATURES','selinux', 'packagegroup-selinux-minimal', '', d)}"
 PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-mls"
-DEFAULT_ENFORCING = "permissive"
+#DEFAULT_ENFORCING = "permissive"
 SELINUX_FILE_CONTEXTS_EXT4 = " -f ${IMAGE_ROOTFS}/etc/selinux/mls/contexts/files/file_contexts"
 EXTRA_IMAGECMD:ext4 += " ${@bb.utils.contains('DISTRO_FEATURES','selinux', '${SELINUX_FILE_CONTEXTS_EXT4}', '', d)}"
+
+# Enable security compiler and linker flags.
+require qcom-security_flags.inc

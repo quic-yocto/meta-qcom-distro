@@ -1,6 +1,6 @@
 require qcom-console-image.bb
 
-SUMMARY = "Basic Wayland image with Weston"
+SUMMARY = "AI Module image with needed feature support"
 
 LICENSE = "BSD-3-Clause-Clear"
 
@@ -8,6 +8,5 @@ LICENSE = "BSD-3-Clause-Clear"
 REQUIRED_DISTRO_FEATURES += "wayland"
 
 CORE_IMAGE_BASE_INSTALL += " \
-    packagegroup-qcom-multimedia \
-    packagegroup-qcom-iot-base-utils \
+    packagegroup-qcom-aimodule \
 "

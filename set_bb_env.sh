@@ -156,7 +156,7 @@ if [ -z "${SDKMACHINE}" ]; then
 fi
 
 BUILDDIR="${WS}/build-$DISTRO"
-DISTRO_VERSION='0.0'
+DISTRO_VERSION='1.0'
 
 if [ $# -eq 1 ]; then
     BUILDDIR="${WS}/$1"

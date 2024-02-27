@@ -9,11 +9,10 @@ inherit packagegroup
 
 PROVIDES = "${PACKAGES}"
 
-PACKAGES = ' \
-    packagegroup-qcom-multimedia \
-    '
+PACKAGES = "${PN}"
 
-RDEPENDS:packagegroup-qcom-multimedia = "\
+RDEPENDS:${PN} = "\
+    packagegroup-container \
     packagegroup-qcom-audio \
     packagegroup-qcom-bluetooth \
     packagegroup-qcom-camera \
@@ -23,5 +22,6 @@ RDEPENDS:packagegroup-qcom-multimedia = "\
     packagegroup-qcom-opencv \
     packagegroup-qcom-sensors \
     packagegroup-qcom-video \
-    packagegroup-qcom-wifi \
+    python3-docker-compose \
+    camera-server \
     "

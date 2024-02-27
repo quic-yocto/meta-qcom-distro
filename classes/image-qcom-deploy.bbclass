@@ -19,7 +19,7 @@ IMAGE_VERSION_SUFFIX = ""
 # Don't install locales into rootfs
 IMAGE_LINGUAS = ""
 
-inherit python3native
+inherit python3native image-efi
 
 DEPENDS:append = " \
     python3-native \
@@ -29,28 +29,22 @@ DEPENDS:append = " \
 PARTBINS_DEPLOYDIR = "${WORKDIR}/partition-bins-${PN}"
 
 do_gen_partition_bins[depends] += " \
-    gen-partitions-tool-native:do_populate_sysroot \
-    partition-confs-native:do_populate_sysroot \
+    partition-confs:do_deploy \
     ptool-native:do_populate_sysroot \
    "
 do_gen_partition_bins() {
-    # Step1: Generate partition.xml using gen_partition utility
-    ${STAGING_BINDIR_NATIVE}/gen_partition.py \
-        -i ${STAGING_ETCDIR_NATIVE}/partitions.conf \
-        -o ${PARTBINS_DEPLOYDIR}/partition.xml
-
+    # Step1: Cleanup stale partition bins
     rm -f ${DEPLOY_DIR_IMAGE}/gpt_backup?.bin
     rm -f ${DEPLOY_DIR_IMAGE}/gpt_both?.bin
     rm -f ${DEPLOY_DIR_IMAGE}/gpt_empty?.bin
     rm -f ${DEPLOY_DIR_IMAGE}/gpt_main?.bin
     rm -f ${DEPLOY_DIR_IMAGE}/patch?.xml
     rm -f ${DEPLOY_DIR_IMAGE}/rawprogram?*.xml
-    rm -f ${DEPLOY_DIR_IMAGE}/partition.xml
     rm -f ${DEPLOY_DIR_IMAGE}/zeros_*.bin
     rm -f ${DEPLOY_DIR_IMAGE}/wipe_rawprogram_PHY?.xml
 
     # Step2: Call ptool to generate partition bins
-    cd ${PARTBINS_DEPLOYDIR} && ${STAGING_BINDIR_NATIVE}/ptool.py -x partition.xml
+    cd ${PARTBINS_DEPLOYDIR} && ${STAGING_BINDIR_NATIVE}/ptool.py -x ${DEPLOY_DIR_IMAGE}/partition.xml
 }
 addtask do_gen_partition_bins after do_rootfs before do_image
 
@@ -76,7 +70,7 @@ SYSTEMIMAGE_TARGET ?= "system.img"
 # use do_deploy_fixup task and copy them here.
 do_deploy_fixup[dirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
-do_deploy_fixup[depends] += "firmware-qcm6490-boot:do_deploy"
+do_deploy_fixup[depends] += "firmware-${MACHINE}-boot:do_deploy"
 do_deploy_fixup[deptask] = "do_image_complete"
 do_deploy_fixup[nostamp] = "1"
 do_deploy_fixup () {
@@ -100,9 +94,19 @@ do_deploy_fixup () {
         fi
     fi
 
+    # copy kernel modules
+    if [ -f ${DEPLOY_DIR_IMAGE}/modules-${MODULE_TARBALL_LINK_NAME}.tgz ]; then
+         install -m 0644 ${DEPLOY_DIR_IMAGE}/modules-${MODULE_TARBALL_LINK_NAME}.tgz kernel-modules.tgz
+    fi
+
     # copy efi.bin
     if [ -f ${DEPLOY_DIR_IMAGE}/efi.bin ]; then
         install -m 0644 ${DEPLOY_DIR_IMAGE}/efi.bin efi.bin
+    fi
+
+    # copy dtb.bin
+    if [ -f ${DEPLOY_DIR_IMAGE}/dtb.bin ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/dtb.bin dtb.bin
     fi
 
     # copy system.img
@@ -133,9 +137,27 @@ do_deploy_fixup () {
         install -m 0644 $mbnfile .
     done
 
+    #Copy the .melf, .fv files
+    for melffile in ${DEPLOY_DIR_IMAGE}/*.melf; do
+        if [ -f "$melffile" ]; then
+            install -m 0644 $melffile .
+        fi
+    done
+
+    for fvfile in ${DEPLOY_DIR_IMAGE}/*.fv; do
+        if [ -f "$fvfile" ]; then
+            install -m 0644 $fvfile .
+        fi
+    done
+
     # copy logfs_ufs_8mb.bin
     if [ -f ${DEPLOY_DIR_IMAGE}/logfs_ufs_8mb.bin ]; then
         install -m 0644 ${DEPLOY_DIR_IMAGE}/logfs_ufs_8mb.bin logfs_ufs_8mb.bin
+    fi
+
+    # copy zeros_5sectors.bin
+    if [ -f ${DEPLOY_DIR_IMAGE}/zeros_5sectors.bin ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/zeros_5sectors.bin zeros_5sectors.bin
     fi
 
     for patchfile in ${DEPLOY_DIR_IMAGE}/patch*.xml; do
@@ -146,6 +168,45 @@ do_deploy_fixup () {
     install -m 0755 ${STAGING_BINDIR_NATIVE}/qdl .
 }
 addtask do_deploy_fixup after do_image_complete before do_build
+
+python do_combine_dtbos () {
+    import os, shutil, subprocess
+
+    dtbdir = os.path.join(d.getVar('DEPLOY_DIR_IMAGE'),"dtb")
+    if os.path.exists(dtbdir):
+        shutil.rmtree(dtbdir)
+    os.mkdir(dtbdir)
+    combined_dtb = os.path.join(dtbdir, "combined-dtb.dtb")
+    print(combined_dtb)
+
+    for dtbf in d.getVar("KERNEL_DEVICETREE").split():
+        dtb = os.path.basename(dtbf)
+        with open(combined_dtb, 'ab') as fout:
+            with open(os.path.join(d.getVar('DEPLOY_DIR_IMAGE'),dtb), 'rb') as fin:
+                shutil.copyfileobj(fin, fout)
+    joint_dtb_list = "%s %s" %(d.getVar("KERNEL_DEVICETREE"), "combined-dtb.dtb")
+
+}
+
+addtask do_combine_dtbos after do_image_complete before do_deploy_fixup
+
+build_fat_dtb() {
+    CONCATDTB=${DEPLOY_DIR_IMAGE}/dtb
+    DTBBIN=${DEPLOY_DIR_IMAGE}/dtb.bin
+    rm -rf ${DTBBIN}
+    build_fat_img ${CONCATDTB} ${DTBBIN}
+}
+do_dtb_img[depends] += " \
+    dosfstools-native:do_populate_sysroot \
+    mtools-native:do_populate_sysroot \
+    ${PN}:do_combine_dtbos \
+   "
+
+python do_dtb_img() {
+    bb.build.exec_func('build_fat_dtb', d)
+}
+
+addtask do_dtb_img after do_combine_dtbos before do_deploy_fixup
 
 # Merge tech dtbos before generating boot.img
 do_merge_dtbos[nostamp] = "1"

@@ -10,11 +10,9 @@ inherit packagegroup
 
 PROVIDES = "${PACKAGES}"
 
-PACKAGES = ' \
-    packagegroup-qcom-test-pkgs \
-    '
+PACKAGES = "${PN}"
 
-RDEPENDS:packagegroup-qcom-test-pkgs = "\
+RDEPENDS:${PN} = "\
     rng-tools \
     fscryptctl \
     libkcapi \
