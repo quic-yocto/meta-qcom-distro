@@ -25,41 +25,6 @@ DEPENDS:append = " \
     python3-native \
     qdl-native \
     "
-# generate partition artifacts in DEPLOYDIR
-PARTBINS_DEPLOYDIR = "${WORKDIR}/partition-bins-${PN}"
-
-do_gen_partition_bins[depends] += " \
-    partition-confs:do_deploy \
-    ptool-native:do_populate_sysroot \
-   "
-do_gen_partition_bins() {
-    # Step1: Cleanup stale partition bins
-    rm -f ${DEPLOY_DIR_IMAGE}/gpt_backup?.bin
-    rm -f ${DEPLOY_DIR_IMAGE}/gpt_both?.bin
-    rm -f ${DEPLOY_DIR_IMAGE}/gpt_empty?.bin
-    rm -f ${DEPLOY_DIR_IMAGE}/gpt_main?.bin
-    rm -f ${DEPLOY_DIR_IMAGE}/patch?.xml
-    rm -f ${DEPLOY_DIR_IMAGE}/rawprogram?*.xml
-    rm -f ${DEPLOY_DIR_IMAGE}/zeros_*.bin
-    rm -f ${DEPLOY_DIR_IMAGE}/wipe_rawprogram_PHY?.xml
-
-    # Step2: Call ptool to generate partition bins
-    cd ${PARTBINS_DEPLOYDIR} && ${STAGING_BINDIR_NATIVE}/ptool.py -x ${DEPLOY_DIR_IMAGE}/partition.xml
-}
-addtask do_gen_partition_bins after do_rootfs before do_image
-
-# Setup sstate
-SSTATETASKS += "do_gen_partition_bins"
-do_gen_partition_bins[sstate-inputdirs] = "${PARTBINS_DEPLOYDIR}"
-do_gen_partition_bins[sstate-outputdirs] = "${DEPLOY_DIR_IMAGE}"
-
-python do_gen_partition_bins_setscene () {
-    sstate_setscene(d)
-}
-addtask do_gen_partition_bins
-do_gen_partition_bins[dirs] = "${PARTBINS_DEPLOYDIR} ${B}"
-do_gen_partition_bins[cleandirs] = "${PARTBINS_DEPLOYDIR}"
-do_gen_partition_bins[stamp-extra-info] = "${MACHINE_ARCH}"
 
 # Default Image names
 BOOTIMAGE_TARGET   ?= "boot.img"
@@ -70,7 +35,8 @@ SYSTEMIMAGE_TARGET ?= "system.img"
 # use do_deploy_fixup task and copy them here.
 do_deploy_fixup[dirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
-do_deploy_fixup[depends] += "firmware-${MACHINE}-boot:do_deploy"
+do_deploy_fixup[depends] += "virtual/bootbins:do_deploy"
+do_deploy_fixup[depends] += "gen-partition-bins:do_deploy"
 do_deploy_fixup[deptask] = "do_image_complete"
 do_deploy_fixup[nostamp] = "1"
 do_deploy_fixup () {
