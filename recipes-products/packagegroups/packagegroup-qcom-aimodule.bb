@@ -20,4 +20,5 @@ RDEPENDS:packagegroup-qcom-aimodule = "\
     packagegroup-qcom-graphics \
     packagegroup-qcom-video \
     packagegroup-qcom-opencv \
+    packagegroup-qcom-data \
     "

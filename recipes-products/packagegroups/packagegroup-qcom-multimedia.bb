@@ -21,6 +21,7 @@ RDEPENDS:${PN} = "\
     packagegroup-qcom-graphics \
     packagegroup-qcom-opencv \
     packagegroup-qcom-sensors \
+    packagegroup-qcom-synx \
     packagegroup-qcom-video \
     python3-docker-compose \
     camera-server \

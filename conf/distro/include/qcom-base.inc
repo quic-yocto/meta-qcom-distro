@@ -34,6 +34,9 @@ INHERIT += "buildhistory"
 INHERIT += "image-buildinfo"
 INHERIT += "recipe_sanity"
 
+# /var/log is on persistent storage and /var/log is not linked to /var/volatile/log
+VOLATILE_LOG_DIR = "no"
+
 BUILDHISTORY_COMMIT = "1"
 
 # Enable uninative for reuse -native sstate across hosts. This version is aligned to glibc 2.38.
