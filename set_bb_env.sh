@@ -46,7 +46,7 @@ fi
 # of the newly created build folder
 init_build_env () {
     # Let bitbake use the following env-vars as if they were pre-set bitbake ones.
-    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD FWZIP_PATH CUST_ID"
+    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID"
 
     # Yocto/OE-core works a bit differently than OE-classic. We're going
     # to source the OE build environment setup script that Yocto provided.
@@ -54,7 +54,7 @@ init_build_env () {
 
     # Clean up environment.
     unset MACHINE SDKMACHINE DISTRO WS OEROOT usage SCRIPT_NAME
-    unset EXTRALAYERS DEBUG_BUILD FWZIP_PATH CUST_ID
+    unset EXTRALAYERS DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID
     unset DISTROTABLE DISTROLAYERS MACHINETABLE MACHLAYERS ITEM
 }
 
@@ -144,6 +144,15 @@ if [ -z "$DEBUG_BUILD" ]; then
     DEBUG_BUILD=0
 fi
 
+# If not set, go for normal build
+if [ -z "$PERFORMANCE_BUILD" ]; then
+    PERFORMANCE_BUILD=0
+fi
+# If debug is set, force no performance build
+if [ $DEBUG_BUILD -ne 0 ]; then
+    PERFORMANCE_BUILD=0
+fi
+
 if [ -z "${SDKMACHINE}" ]; then
     SDKMACHINE='x86_64'
 fi
@@ -206,6 +215,7 @@ MACHINE = "${MACHINE}"
 SDKMACHINE = "${SDKMACHINE}"
 DISTRO_VERSION = "${DISTRO_VERSION}"
 DEBUG_BUILD = "${DEBUG_BUILD}"
+PERFORMANCE_BUILD = "${PERFORMANCE_BUILD}"
 
 # Force error for dangling bbappends
 BB_DANGLINGAPPENDS_WARNONLY_forcevariable = "false"
@@ -245,6 +255,7 @@ Your build environment has been configured with:
     SDKMACHINE = ${SDKMACHINE}
     DISTRO = ${DISTRO}
     DEBUG_BUILD = ${DEBUG_BUILD}
+    PERFORMANCE_BUILD = ${PERFORMANCE_BUILD}
 
 You can now run 'bitbake <target>'
 
