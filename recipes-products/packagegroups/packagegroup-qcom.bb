@@ -31,6 +31,7 @@ RDEPENDS:packagegroup-support-utils = "\
     libnl \
     libxml2 \
     procps \
+    zram \
     "
 
 RDEPENDS:packagegroup-filesystem-utils = "\
