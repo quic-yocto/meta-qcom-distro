@@ -16,7 +16,7 @@ TARGET_VENDOR = "-qcom"
 # to make the python below work. Local, site and auto.conf will override it.
 TCMODE ?= "default"
 
-DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization tpm"
+DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization tpm usrmerge"
 
 # Use systemd init manager for system initialization.
 INIT_MANAGER = "systemd"
