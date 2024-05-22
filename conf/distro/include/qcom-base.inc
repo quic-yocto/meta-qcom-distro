@@ -33,7 +33,7 @@ IMAGE_FSTYPES:remove = "tar.gz"
 
 # Pull in the initrd image by default
 INITRAMFS_IMAGE_BUNDLE ?= "1"
-INITRAMFS_IMAGE = "initramfs-qcom-image"
+INITRAMFS_IMAGE = "${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'initramfs-ostree-image', 'initramfs-qcom-image', d)}"
 
 INHERIT += "buildhistory"
 INHERIT += "image-buildinfo"
