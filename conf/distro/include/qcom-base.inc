@@ -34,6 +34,16 @@ INHERIT += "buildhistory"
 INHERIT += "image-buildinfo"
 INHERIT += "recipe_sanity"
 
+## Performance build customizations.
+# In PERFORMANCE_BUILD let /var/log be volatile (i.e. not on persistent storage)
+# by symlinking /var/log to /var/volatile/log
+VOLATILE_LOG_DIR = "${@bb.utils.contains('PERFORMANCE_BUILD', '1', 'yes', 'no', d)}"
+
+# Drop console from Kernel cmdline.
+CONSOLE_CMDLINE = "${@oe.utils.conditional('PERFORMANCE_BUILD','1','console=','console=ttyMSM0,115200n8 earlycon',d)}"
+# Disable serial console
+SERIAL_CONSOLES = "${@oe.utils.conditional('PERFORMANCE_BUILD','1','','115200;ttyMSM0',d)}"
+
 BUILDHISTORY_COMMIT = "1"
 
 # Enable uninative for reuse -native sstate across hosts. This version is aligned to glibc 2.38.
@@ -50,6 +60,18 @@ INHERIT += "uninative"
 
 # GCC Version
 GCCVERSION = "11.4%"
+
+# Easily switch between rust versions just by changing RUST_VERSION variable
+RUST_VERSION ?= "1.73.0"
+
+PREFERRED_VERSION_cargo ?= "${RUST_VERSION}"
+PREFERRED_VERSION_cargo-native ?= "${RUST_VERSION}"
+PREFERRED_VERSION_libstd-rs ?= "${RUST_VERSION}"
+PREFERRED_VERSION_rust ?= "${RUST_VERSION}"
+PREFERRED_VERSION_rust-cross-${TARGET_ARCH} ?= "${RUST_VERSION}"
+PREFERRED_VERSION_rust-llvm ?= "${RUST_VERSION}"
+PREFERRED_VERSION_rust-llvm-native ?= "${RUST_VERSION}"
+PREFERRED_VERSION_rust-native ?= "${RUST_VERSION}"
 
 # Selinux support
 DISTRO_FEATURES_FILTER_NATIVE:append = " selinux"

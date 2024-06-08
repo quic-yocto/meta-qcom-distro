@@ -13,6 +13,7 @@ PACKAGES = ' \
     ${PN} \
     packagegroup-filesystem-utils \
     packagegroup-support-utils \
+    packagegroup-qcom-vm \
     '
 
 RDEPENDS:${PN} = "\
@@ -20,16 +21,29 @@ RDEPENDS:${PN} = "\
     packagegroup-qcom-core \
     packagegroup-qcom-initscripts \
     packagegroup-qcom-perf \
+    packagegroup-qcom-ppat \
+    packagegroup-qcom-vm \
     packagegroup-qcom-wifi \
     packagegroup-support-utils \
+    packagegroup-qcom-data \
     "
 
+RDEPENDS:packagegroup-qcom-vm = "\
+    linux-svm-kernel-qcom-package \
+    kvmtool \
+    qemu \
+"
+
 RDEPENDS:packagegroup-support-utils = "\
+    can-utils \
     chrony \
+    ethtool \
+    iproute2 \
     libinput \
     libinput-bin \
     libnl \
     libxml2 \
+    pciutils \
     procps \
     zram \
     "

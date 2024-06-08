@@ -35,10 +35,16 @@ SYSTEMIMAGE_TARGET ?= "system.img"
 # use do_deploy_fixup task and copy them here.
 do_deploy_fixup[dirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
-do_deploy_fixup[depends] += "virtual/bootbins:do_deploy"
-do_deploy_fixup[depends] += "gen-partition-bins:do_deploy"
 do_deploy_fixup[deptask] = "do_image_complete"
 do_deploy_fixup[nostamp] = "1"
+
+DEPLOYDEPENDS = "virtual/bootbins:do_deploy \
+    gen-partition-bins:do_deploy"
+
+# qcs9100 bootbins are not available
+DEPLOYDEPENDS:remove:qcs9100 = "virtual/bootbins:do_deploy"
+
+do_deploy_fixup[depends] += "${DEPLOYDEPENDS}"
 do_deploy_fixup () {
     # copy vmlinux, Image.gz/Image/zImage
     if [ -f ${DEPLOY_DIR_IMAGE}/vmlinux ]; then
@@ -96,11 +102,15 @@ do_deploy_fixup () {
 
     #Copy the .elf, .mbn files
     for elffile in ${DEPLOY_DIR_IMAGE}/*.elf; do
-        install -m 0644 $elffile .
+        if [ -f "$elffile" ]; then
+            install -m 0644 $elffile .
+        fi
     done
 
     for mbnfile in ${DEPLOY_DIR_IMAGE}/*.mbn; do
-        install -m 0644 $mbnfile .
+        if [ -f "$mbnfile" ]; then
+            install -m 0644 $mbnfile .
+        fi
     done
 
     #Copy the .melf, .fv files
@@ -135,49 +145,22 @@ do_deploy_fixup () {
 }
 addtask do_deploy_fixup after do_image_complete before do_build
 
-python do_combine_dtbos () {
-    import os, shutil, subprocess
-
-    dtbdir = os.path.join(d.getVar('DEPLOY_DIR_IMAGE'),"dtb")
-    if os.path.exists(dtbdir):
-        shutil.rmtree(dtbdir)
-    os.mkdir(dtbdir)
-    combined_dtb = os.path.join(dtbdir, "combined-dtb.dtb")
-    print(combined_dtb)
-
-    for dtbf in d.getVar("KERNEL_DEVICETREE").split():
-        dtb = os.path.basename(dtbf)
-        with open(combined_dtb, 'ab') as fout:
-            with open(os.path.join(d.getVar('DEPLOY_DIR_IMAGE'),dtb), 'rb') as fin:
-                shutil.copyfileobj(fin, fout)
-    joint_dtb_list = "%s %s" %(d.getVar("KERNEL_DEVICETREE"), "combined-dtb.dtb")
-
-}
-
-addtask do_combine_dtbos after do_image_complete before do_deploy_fixup
-
 build_fat_dtb() {
-    CONCATDTB=${DEPLOY_DIR_IMAGE}/dtb
+    CONCATDTB=${DEPLOY_DIR_IMAGE}/DTOverlays/dtb
     DTBBIN=${DEPLOY_DIR_IMAGE}/dtb.bin
     rm -rf ${DTBBIN}
     build_fat_img ${CONCATDTB} ${DTBBIN}
 }
-do_dtb_img[depends] += " \
-    dosfstools-native:do_populate_sysroot \
-    mtools-native:do_populate_sysroot \
-    ${PN}:do_combine_dtbos \
-   "
-
-python do_dtb_img() {
-    bb.build.exec_func('build_fat_dtb', d)
-}
-
-addtask do_dtb_img after do_combine_dtbos before do_deploy_fixup
 
 # Merge tech dtbos before generating boot.img
 do_merge_dtbos[nostamp] = "1"
 do_merge_dtbos[cleandirs] = "${DEPLOY_DIR_IMAGE}/DTOverlays"
-do_merge_dtbos[depends] += "dtc-native:do_populate_sysroot virtual/kernel:do_deploy"
+do_merge_dtbos[depends] += " \
+    dtc-native:do_populate_sysroot \
+    virtual/kernel:do_deploy \
+    dosfstools-native:do_populate_sysroot \
+    mtools-native:do_populate_sysroot \
+   "
 
 python do_merge_dtbos () {
     import os, shutil, subprocess
@@ -218,5 +201,16 @@ python do_merge_dtbos () {
         output = dtb + "." + str(dtbos_found)
         shutil.copy2(os.path.join(dtbotpdir, output), dtoverlaydir)
         os.symlink(os.path.join(dtoverlaydir, output), os.path.join(dtoverlaydir, dtb))
+
+        #Append latest overlayed file to combined-dtb.dtb
+        os.makedirs(os.path.join(dtoverlaydir, "dtb"), exist_ok=True)
+        combined_dtb = os.path.join(dtoverlaydir, "dtb/combined-dtb.dtb")
+        with open(combined_dtb, 'ab') as fout:
+            with open(os.path.join(dtoverlaydir,dtb), 'rb') as fin:
+                bb.debug(1, "combining: %s" % os.path.join(dtoverlaydir,dtb))
+                shutil.copyfileobj(fin, fout)
+
+    # Generate dtb.bin from combined-dtb.dtb
+    bb.build.exec_func('build_fat_dtb', d)
 }
 addtask merge_dtbos before do_image after do_rootfs
