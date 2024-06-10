@@ -38,11 +38,8 @@ do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[deptask] = "do_image_complete"
 do_deploy_fixup[nostamp] = "1"
 
-DEPLOYDEPENDS = "virtual/bootbins:do_deploy \
-    gen-partition-bins:do_deploy"
-
-# qcs9100 bootbins are not available
-DEPLOYDEPENDS:remove:qcs9100 = "virtual/bootbins:do_deploy"
+DEPLOYDEPENDS  = "gen-partition-bins:do_deploy"
+DEPLOYDEPENDS += ' ${@oe.utils.conditional("PREFERRED_PROVIDER_virtual/bootbins", "firmware-qcom-bootbins", "firmware-qcom-bootbins:do_deploy", "", d)}'
 
 do_deploy_fixup[depends] += "${DEPLOYDEPENDS}"
 do_deploy_fixup () {
