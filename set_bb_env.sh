@@ -42,12 +42,28 @@ if [ -e "$WS/layers/openembedded-core" ]; then
     OEROOT="$WS/layers/openembedded-core"
 fi
 
+apply_poky_patches () {
+    cd ${WS}/layers/poky
+
+    patchfile='0001-fetch2-git-Add-verbose-logging-support.patch'
+    wget -nv https://artifacts.codelinaro.org/artifactory/codelinaro-le/$patchfile
+    git apply --check $patchfile
+    if [ $? != 0 ] ; then
+        echo " $patchfile ... patch Failed to apply, ignoring"
+    else
+        git apply $patchfile
+    fi
+    rm $patchfile
+
+    cd -
+}
+
 # Eventually we need to call oe-init-build-env to finalize the configuration
 # of the newly created build folder
 init_build_env () {
     # Let bitbake use the following env-vars as if they were pre-set bitbake ones.
     BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID"
-
+    apply_poky_patches &> /dev/null
     # Yocto/OE-core works a bit differently than OE-classic. We're going
     # to source the OE build environment setup script that Yocto provided.
     . ${OEROOT}/oe-init-build-env ${BUILDDIR}
