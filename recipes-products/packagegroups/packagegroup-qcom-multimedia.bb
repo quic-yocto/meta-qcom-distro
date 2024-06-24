@@ -19,12 +19,11 @@ RDEPENDS:${PN} = "\
     packagegroup-qcom-display \
     packagegroup-qcom-fastcv \
     packagegroup-qcom-graphics \
+    packagegroup-qcom-k8s \
     packagegroup-qcom-opencv \
     packagegroup-qcom-sensors \
     packagegroup-qcom-video \
     python3-docker-compose \
-    packagegroup-k8s-host \
-    packagegroup-k8s-node \
     "
 
 RDEPENDS:${PN}:append:qcm6490 = "\
