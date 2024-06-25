@@ -62,7 +62,7 @@ apply_poky_patches () {
 # of the newly created build folder
 init_build_env () {
     # Let bitbake use the following env-vars as if they were pre-set bitbake ones.
-    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID"
+    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH"
     apply_poky_patches &> /dev/null
     # Yocto/OE-core works a bit differently than OE-classic. We're going
     # to source the OE build environment setup script that Yocto provided.
@@ -70,7 +70,7 @@ init_build_env () {
 
     # Clean up environment.
     unset MACHINE SDKMACHINE DISTRO WS OEROOT usage SCRIPT_NAME
-    unset EXTRALAYERS DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID
+    unset EXTRALAYERS DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH
     unset DISTROTABLE DISTROLAYERS MACHINETABLE MACHLAYERS ITEM
 }
 
@@ -219,6 +219,10 @@ fi
 if [ -n "$FWZIP_PATH" ]; then
    echo -e "\n# FW zip path" >> ${BUILDDIR}/conf/local.conf
    echo "FWZIP_PATH = \"$FWZIP_PATH\"" >> ${BUILDDIR}/conf/local.conf
+fi
+# If BB_GIT_VERBOSE_FETCH is avilable update
+if [ -n "$BB_GIT_VERBOSE_FETCH" ]; then
+   sed -i "s/^BB_GIT_VERBOSE_FETCH = .*$/BB_GIT_VERBOSE_FETCH = \"$BB_GIT_VERBOSE_FETCH\"/g" ${BUILDDIR}/conf/local.conf
 fi
 
 ##### auto.conf #####
