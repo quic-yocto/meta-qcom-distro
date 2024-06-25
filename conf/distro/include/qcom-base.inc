@@ -46,6 +46,9 @@ SERIAL_CONSOLES = "${@oe.utils.conditional('PERFORMANCE_BUILD','1','','115200;tt
 
 BUILDHISTORY_COMMIT = "1"
 
+# docker-ce has been deprecated, so switch to docker-moby as the preferred provider.
+PREFERRED_PROVIDER_virtual/docker = "docker-moby"
+
 # Enable uninative for reuse -native sstate across hosts. This version is aligned to glibc 2.38.
 # While modifying, do ensure both uninative and libc version updates go hand in hand.
 UNINATIVE_MAXGLIBCVERSION = "2.38"
