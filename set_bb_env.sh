@@ -258,9 +258,12 @@ DL_DIR = "${WS}/downloads"
 # Where to save shared state
 SSTATE_DIR = "${WS}/sstate-cache"
 
-# Regex for MIRRORS
-MIRRORS:prepend = "git://.*/.*/ git://git.codelinaro.org/clo/yocto-mirrors/ "
-MIRRORS:prepend = "https://.*/.*/ https://codelinaro.jfrog.io/artifactory/codelinaro-le/ "
+# Add codelinaro sites to MIRRORS
+MIRRORS += "\
+git://github.com git://git.codelinaro.org/clo/yocto-mirrors/github/ \
+git://.*/.*/ git://git.codelinaro.org/clo/yocto-mirrors/ \
+https://.*/.*/ https://codelinaro.jfrog.io/artifactory/codelinaro-le/ \
+"
 
 EOF
 if [ -e $WS/layers/meta-qcom-distro/conf/site.conf ]; then
