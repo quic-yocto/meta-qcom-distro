@@ -17,7 +17,12 @@ CORE_IMAGE_BASE_INSTALL += " \
     packagegroup-filesystem-utils \
 "
 
-CORE_IMAGE_EXTRA_INSTALL += "overlayfs-qcom-paths"
+IMAGE_FSTYPES:remove = "${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'ostreepush garagesign garagecheck', ' ', d)}"
+SOTA_CLIENT = ""
+IMAGE_INSTALL:remove = "${@oe.utils.ifelse('${SOTA_CLIENT}' != 'aktualizr', 'aktualizr aktualizr-info', '')}"
+
+#Increase image size as a percentage overage to accomodate atleast two OSTree deployments
+IMAGE_OVERHEAD_FACTOR = "2.0"
 
 EXTRA_USERS_PARAMS = "\
     useradd -r -s /bin/false system; \
