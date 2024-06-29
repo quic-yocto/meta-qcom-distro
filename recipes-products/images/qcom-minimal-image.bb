@@ -2,7 +2,7 @@ SUMMARY = "Minimal image"
 
 LICENSE = "BSD-3-Clause-Clear"
 
-IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enable-adbd read-only-rootfs"
+IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enable-adbd"
 
 inherit sota core-image features_check extrausers image-adbd image-qcom-deploy
 
