@@ -87,3 +87,16 @@ EXTRA_IMAGECMD:ext4 += " ${@bb.utils.contains('DISTRO_FEATURES','selinux', '${SE
 
 # Enable security compiler and linker flags.
 require qcom-security_flags.inc
+
+# Ostree variables
+OSTREE_BOOTLOADER ?= "none"
+OSTREE_SPLIT_BOOT = "1"
+OSTREE_LOADER_LINK = "0"
+BUILD_OTA_TARBALL = "1"
+OSTREE_KERNEL = "${EFI_LINUX_IMG}"
+OSTREE_KERNEL_ARGS_COMMON ?= "root=LABEL=otaroot rootfstype=ext4"
+OSTREE_KERNEL_ARGS ?= "console=ttyMSM0,115200n8 earlycon pcie_pme=nomsi kernel.sched_pelt_multiplier=4 rcupdate.rcu_expedited=1 rcu_nocbs=0-7 kpti=off kasan=off kasan.stacktrace=off no-steal-acc page_owner=on swiotlb=128 ${OSTREE_KERNEL_ARGS_COMMON}"
+SOTA_CLIENT_PROV ?= ""
+OSTREE_DEPLOY_DEVICETREE = "0"
+OSTREE_DEVICETREE = "${KERNEL_DEVICETREE}"
+OSTREE_MULTI_DEVICETREE_SUPPORT = "0"
