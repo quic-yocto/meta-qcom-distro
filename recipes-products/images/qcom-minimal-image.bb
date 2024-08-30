@@ -6,6 +6,9 @@ IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enab
 
 inherit core-image features_check extrausers image-adbd image-qcom-deploy
 
+# selinux-image is inherited to utilize the selinux_set_labels API, to perform build-time context labeling.
+inherit  ${@bb.utils.contains('DISTRO_FEATURES', 'selinux', 'selinux-image', '', d)}
+
 # let's make sure we have a good image..
 REQUIRED_DISTRO_FEATURES = "pam systemd"
 
