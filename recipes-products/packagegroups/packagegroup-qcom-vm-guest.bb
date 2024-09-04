@@ -6,6 +6,9 @@ PACKAGE_ARCH = "${TUNE_PKGARCH}"
 
 inherit packagegroup
 
+# Disable selinux for qcom-guestvm-image
+DEFAULT_ENFORCING ?= "disabled"
+
 PROVIDES = "${PACKAGES}"
 
 PACKAGES = ' \
