@@ -19,12 +19,12 @@ IMAGE_VERSION_SUFFIX = ""
 # Don't install locales into rootfs
 IMAGE_LINGUAS = ""
 
-inherit python3native image-efi
+inherit python3native
 
 DEPENDS:append = " \
     python3-native \
     qdl-native \
-    "
+"
 
 # Default Image names
 BOOTIMAGE_TARGET   ?= "boot.img"
@@ -35,13 +35,13 @@ SYSTEMIMAGE_TARGET ?= "system.img"
 # use do_deploy_fixup task and copy them here.
 do_deploy_fixup[dirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
+do_deploy_fixup[depends] += "virtual/bootbins:do_deploy"
+do_deploy_fixup[depends] += "qcom-gen-partition-bins:do_deploy"
+do_deploy_fixup[depends] += "esp-qcom-image:do_image_complete"
+do_deploy_fixup[depends] += "dtb-qcom-image:do_image_complete"
 do_deploy_fixup[deptask] = "do_image_complete"
+
 do_deploy_fixup[nostamp] = "1"
-
-DEPLOYDEPENDS  = "gen-partition-bins:do_deploy"
-DEPLOYDEPENDS += ' ${@oe.utils.conditional("PREFERRED_PROVIDER_virtual/bootbins", "firmware-qcom-bootbins", "firmware-qcom-bootbins:do_deploy", "", d)}'
-
-do_deploy_fixup[depends] += "${DEPLOYDEPENDS}"
 do_deploy_fixup () {
     # copy vmlinux, Image.gz/Image/zImage
     if [ -f ${DEPLOY_DIR_IMAGE}/vmlinux ]; then
@@ -69,13 +69,13 @@ do_deploy_fixup () {
     fi
 
     # copy efi.bin
-    if [ -f ${DEPLOY_DIR_IMAGE}/efi.bin ]; then
-        install -m 0644 ${DEPLOY_DIR_IMAGE}/efi.bin efi.bin
+    if [ -f ${DEPLOY_DIR_IMAGE}/esp-qcom-image-${MACHINE}.vfat ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/esp-qcom-image-${MACHINE}.vfat efi.bin
     fi
 
     # copy dtb.bin
-    if [ -f ${DEPLOY_DIR_IMAGE}/dtb.bin ]; then
-        install -m 0644 ${DEPLOY_DIR_IMAGE}/dtb.bin dtb.bin
+    if [ -f ${DEPLOY_DIR_IMAGE}/dtb-qcom-image-${MACHINE}.vfat ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/dtb-qcom-image-${MACHINE}.vfat dtb.bin
     fi
 
     # copy system.img
@@ -92,6 +92,7 @@ do_deploy_fixup () {
     for gpback in ${DEPLOY_DIR_IMAGE}/gpt_backup[0-9].bin; do
         install -m 0644 $gpback .
     done
+
     #Copy rawprogram.xml
     for rawpg in ${DEPLOY_DIR_IMAGE}/rawprogram[0-9].xml; do
         install -m 0644 $rawpg .
@@ -136,78 +137,5 @@ do_deploy_fixup () {
     for patchfile in ${DEPLOY_DIR_IMAGE}/patch*.xml; do
         install -m 0644 $patchfile .
     done
-
-    #Install qdl
-    install -m 0755 ${STAGING_BINDIR_NATIVE}/qdl .
 }
 addtask do_deploy_fixup after do_image_complete before do_build
-
-build_fat_dtb() {
-    CONCATDTB=${DEPLOY_DIR_IMAGE}/DTOverlays/dtb
-    DTBBIN=${DEPLOY_DIR_IMAGE}/dtb.bin
-    rm -rf ${DTBBIN}
-    build_fat_img ${CONCATDTB} ${DTBBIN}
-}
-
-# Merge tech dtbos before generating boot.img
-do_merge_dtbos[nostamp] = "1"
-do_merge_dtbos[cleandirs] = "${DEPLOY_DIR_IMAGE}/DTOverlays"
-do_merge_dtbos[depends] += " \
-    dtc-native:do_populate_sysroot \
-    virtual/kernel:do_deploy \
-    dosfstools-native:do_populate_sysroot \
-    mtools-native:do_populate_sysroot \
-   "
-
-python do_merge_dtbos () {
-    import os, shutil, subprocess
-
-    fdtoverlay_bin = d.getVar('STAGING_BINDIR_NATIVE') + "/fdtoverlay"
-    dtbotpdir = d.getVar('DEPLOY_DIR_IMAGE') + "/" + "tech_dtbs"
-    dtoverlaydir = d.getVar('DEPLOY_DIR_IMAGE') + "/" + "DTOverlays"
-    os.makedirs(dtbotpdir, exist_ok=True)
-
-    for kdt in d.getVar("KERNEL_DEVICETREE").split():
-        org_kdtb = os.path.join(d.getVar('DEPLOY_DIR_IMAGE'), os.path.basename(kdt))
-
-        # Rename and copy original kernel devicetree files
-        kdtb = os.path.basename(org_kdtb) + ".0"
-        shutil.copy2(org_kdtb, os.path.join(dtbotpdir, kdtb))
-
-        # Find  and append matching dtbos for each dtb
-        dtb = os.path.basename(org_kdtb)
-        dtb_name = dtb.rsplit('.', 1)[0]
-        dtbo_list =(d.getVarFlag('KERNEL_TECH_DTBOS', dtb_name) or "").split()
-        bb.debug(1, "%s dtbo_list: %s" % (dtb_name, dtbo_list))
-        dtbos_found = 0
-        for dtbo_file in dtbo_list:
-            dtbos_found += 1
-            dtbo = os.path.join(dtbotpdir, dtbo_file)
-            pre_kdtb = os.path.join(dtbotpdir, dtb + "." + str(dtbos_found - 1))
-            post_kdtb = os.path.join(dtbotpdir, dtb + "." + str(dtbos_found))
-            cmd = fdtoverlay_bin + " -v -i "+ pre_kdtb +" "+ dtbo +" -o "+ post_kdtb
-            bb.debug(1, "merge_dtbos cmd: %s" % (cmd))
-            try:
-                subprocess.check_output(cmd, shell=True)
-            except RuntimeError as e:
-                bb.error("cmd: %s failed with error %s" % (cmd, str(e)))
-        if dtbos_found == 0:
-            bb.debug(1, "No tech dtbos to merge into %s" % dtb)
-
-        #Copy latest overlayed file into DTOverlays path
-        output = dtb + "." + str(dtbos_found)
-        shutil.copy2(os.path.join(dtbotpdir, output), dtoverlaydir)
-        os.symlink(os.path.join(dtoverlaydir, output), os.path.join(dtoverlaydir, dtb))
-
-        #Append latest overlayed file to combined-dtb.dtb
-        os.makedirs(os.path.join(dtoverlaydir, "dtb"), exist_ok=True)
-        combined_dtb = os.path.join(dtoverlaydir, "dtb/combined-dtb.dtb")
-        with open(combined_dtb, 'ab') as fout:
-            with open(os.path.join(dtoverlaydir,dtb), 'rb') as fin:
-                bb.debug(1, "combining: %s" % os.path.join(dtoverlaydir,dtb))
-                shutil.copyfileobj(fin, fout)
-
-    # Generate dtb.bin from combined-dtb.dtb
-    bb.build.exec_func('build_fat_dtb', d)
-}
-addtask merge_dtbos before do_image after do_rootfs

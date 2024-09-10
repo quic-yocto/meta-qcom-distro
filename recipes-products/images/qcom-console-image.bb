@@ -14,7 +14,6 @@ CORE_IMAGE_EXTRA_INSTALL += " \
     libgomp \
     libgomp-dev \
     libgomp-staticdev \
-    packagegroup-qcom-securemsm \
 "
 
 # docker pulls runc/containerd, which in turn recommend lxc unecessarily

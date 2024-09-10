@@ -1,5 +1,10 @@
 DISTRO_VERSION ??= "1.0"
 
+# Supported selections are: base, custom
+# We intend to use same selection as that of BSP by default.
+# Specific DISTROs might change this as needed.
+DISTROOVERRIDES =. "qcom-${QCOM_SELECTED_BSP}-distro:"
+
 # SDK variables.
 SDK_VERSION = "${DISTRO_VERSION}"
 SDK_NAME = "${DISTRO}-${SDKMACHINE}-${IMAGE_BASENAME}-${TUNE_PKGARCH}-${MACHINE}"
@@ -11,7 +16,7 @@ TARGET_VENDOR = "-qcom"
 # to make the python below work. Local, site and auto.conf will override it.
 TCMODE ?= "default"
 
-DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization"
+DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization tpm"
 
 # Use systemd init manager for system initialization.
 INIT_MANAGER = "systemd"
@@ -81,7 +86,10 @@ DISTRO_FEATURES_FILTER_NATIVE:append = " selinux"
 DISTRO_FEATURES_FILTER_NATIVESDK:append = " selinux"
 DISTRO_EXTRA_RDEPENDS:append = " ${@bb.utils.contains('DISTRO_FEATURES','selinux', 'packagegroup-selinux-minimal', '', d)}"
 PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-mls"
-#DEFAULT_ENFORCING = "permissive"
+
+# Disable selinux in default
+DEFAULT_ENFORCING ?= "disabled"
+
 SELINUX_FILE_CONTEXTS_EXT4 = " -f ${IMAGE_ROOTFS}/etc/selinux/mls/contexts/files/file_contexts"
 EXTRA_IMAGECMD:ext4 += " ${@bb.utils.contains('DISTRO_FEATURES','selinux', '${SELINUX_FILE_CONTEXTS_EXT4}', '', d)}"
 

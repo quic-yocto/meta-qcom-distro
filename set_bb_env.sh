@@ -62,15 +62,15 @@ apply_poky_patches () {
 # of the newly created build folder
 init_build_env () {
     # Let bitbake use the following env-vars as if they were pre-set bitbake ones.
-    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH"
+    BB_ENV_PASSTHROUGH_ADDITIONS="DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH QCOM_SELECTED_BSP"
     apply_poky_patches &> /dev/null
     # Yocto/OE-core works a bit differently than OE-classic. We're going
     # to source the OE build environment setup script that Yocto provided.
     . ${OEROOT}/oe-init-build-env ${BUILDDIR}
 
     # Clean up environment.
-    unset MACHINE SDKMACHINE DISTRO WS OEROOT usage SCRIPT_NAME
-    unset EXTRALAYERS DEBUG_BUILD PERFORMANCE_BUILD FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH
+    unset MACHINE SDKMACHINE DISTRO WS OEROOT usage SCRIPT_NAME QCOM_SELECTED_BSP
+    unset EXTRALAYERS DEBUG_BUILD PERFORMANCE_BUILD BUILDTYPE FWZIP_PATH CUST_ID BB_GIT_VERBOSE_FETCH
     unset DISTROTABLE DISTROLAYERS MACHINETABLE MACHLAYERS ITEM
 }
 
@@ -89,7 +89,7 @@ fi
 read uitool <<< "$(which whiptail dialog 2> /dev/null)"
 
 # create a common list of "<machine>(<layer>)", sorted by <machine>
-# Restrict to meta-qcom machines
+# Restrict to meta-qcom-hwe machines
 MACHLAYERS=$(find layers -print | grep "meta-qcom-hwe/conf/machine/.*\.conf" | sed -e 's/\.conf//g' -e 's/layers\///' | awk -F'/conf/machine/' '{print $NF "(" $1 ")"}' | LANG=C sort)
 
 if [ -n "${MACHLAYERS}" ] && [ -z "${MACHINE}" ]; then
@@ -155,18 +155,23 @@ if [ -z "$DISTRO" ]; then
     DISTRO="nodistro"
 fi
 
-# If not set, go for 'no debug' build
-if [ -z "$DEBUG_BUILD" ]; then
+# If debug_build is set to non zero, force no performance build
+if [ -n "${DEBUG_BUILD}" ] && [ $DEBUG_BUILD -ne 0 ]; then
+    DEBUG_BUILD=1
+    PERFORMANCE_BUILD=0
+    BUILDTYPE="debug"
+# If performance_build is set to non zero, go for performance build
+elif [ -n "${PERFORMANCE_BUILD}" ] && [ $PERFORMANCE_BUILD -ne 0 ]; then
     DEBUG_BUILD=0
+    PERFORMANCE_BUILD=1
+    BUILDTYPE="performance"
 fi
 
-# If not set, go for normal build
-if [ -z "$PERFORMANCE_BUILD" ]; then
+# If nothing has been set, go for 'default'
+if [ -z "$BUILDTYPE" ]; then
+    DEBUG_BUILD=0
     PERFORMANCE_BUILD=0
-fi
-# If debug is set, force no performance build
-if [ $DEBUG_BUILD -ne 0 ]; then
-    PERFORMANCE_BUILD=0
+    BUILDTYPE="default"
 fi
 
 if [ -z "${SDKMACHINE}" ]; then
@@ -220,6 +225,7 @@ if [ -n "$FWZIP_PATH" ]; then
    echo -e "\n# FW zip path" >> ${BUILDDIR}/conf/local.conf
    echo "FWZIP_PATH = \"$FWZIP_PATH\"" >> ${BUILDDIR}/conf/local.conf
 fi
+
 # If BB_GIT_VERBOSE_FETCH is avilable update
 if [ -n "$BB_GIT_VERBOSE_FETCH" ]; then
    sed -i "s/^BB_GIT_VERBOSE_FETCH = .*$/BB_GIT_VERBOSE_FETCH = \"$BB_GIT_VERBOSE_FETCH\"/g" ${BUILDDIR}/conf/local.conf
@@ -242,6 +248,18 @@ BB_DANGLINGAPPENDS_WARNONLY_forcevariable = "false"
 
 # Extra options that can be changed by the user
 INHERIT += "rm_work"
+
+EOF
+
+# If QCOM_SELECTED_BSP is not defined, set it to 'custom'
+if [ -z "$QCOM_SELECTED_BSP" ]; then
+    QCOM_SELECTED_BSP='custom'
+fi
+
+# Update QCOM_SELECTED_BSP in auto.conf
+cat >> ${BUILDDIR}/conf/auto.conf <<EOF
+# Selected QCOM BSP
+QCOM_SELECTED_BSP = "${QCOM_SELECTED_BSP}"
 
 EOF
 
@@ -274,11 +292,11 @@ cat <<EOF
 
 Your build environment has been configured with:
 
-    MACHINE = ${MACHINE}
+    MACHINE    = ${MACHINE}
     SDKMACHINE = ${SDKMACHINE}
-    DISTRO = ${DISTRO}
-    DEBUG_BUILD = ${DEBUG_BUILD}
-    PERFORMANCE_BUILD = ${PERFORMANCE_BUILD}
+    DISTRO     = ${DISTRO}
+    BUILDTYPE  = ${BUILDTYPE}
+    BSP-TYPE   = qcom-${QCOM_SELECTED_BSP}-bsp
 
 You can now run 'bitbake <target>'
 

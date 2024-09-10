@@ -13,19 +13,21 @@ PACKAGES = "${PN}"
 
 RDEPENDS:${PN} = "\
     packagegroup-container \
+    packagegroup-qcom-opencv \
+    python3-docker-compose \
+    "
+
+RDEPENDS:${PN}:append:qcom-custom-bsp = "\
     packagegroup-qcom-audio \
-    packagegroup-qcom-bluetooth \
     packagegroup-qcom-camera \
     packagegroup-qcom-display \
     packagegroup-qcom-fastcv \
     packagegroup-qcom-graphics \
+    packagegroup-qcom-iot-base-utils \
     packagegroup-qcom-k8s \
-    packagegroup-qcom-opencv \
-    packagegroup-qcom-sensors \
     packagegroup-qcom-video \
-    python3-docker-compose \
     "
 
-RDEPENDS:${PN}:append:qcm6490 = "\
-    camera-server \
+RDEPENDS:${PN}:remove:qcs8300 = "\
+    packagegroup-qcom-display \
     "

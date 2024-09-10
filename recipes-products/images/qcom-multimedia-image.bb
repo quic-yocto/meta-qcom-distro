@@ -9,5 +9,4 @@ REQUIRED_DISTRO_FEATURES += "wayland"
 
 CORE_IMAGE_BASE_INSTALL += " \
     packagegroup-qcom-multimedia \
-    packagegroup-qcom-iot-base-utils \
 "

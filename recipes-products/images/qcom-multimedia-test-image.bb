@@ -1,4 +1,4 @@
-require qcom-multimedia-full-image.bb
+require qcom-multimedia-image.bb
 
 SUMMARY = "Test multimedia image with ptest"
 

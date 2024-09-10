@@ -4,14 +4,13 @@ LICENSE = "BSD-3-Clause-Clear"
 
 IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enable-adbd read-only-rootfs"
 
-inherit core-image features_check extrausers image-adbd image-qcom-deploy image-efi
+inherit core-image features_check extrausers image-adbd image-qcom-deploy
 
 # let's make sure we have a good image..
 REQUIRED_DISTRO_FEATURES = "pam systemd"
 
 CORE_IMAGE_BASE_INSTALL += " \
-    kernel-modules \
-    resize-partitions \
+    qcom-resize-partitions \
     packagegroup-filesystem-utils \
 "
 
