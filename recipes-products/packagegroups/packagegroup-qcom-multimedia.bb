@@ -17,7 +17,7 @@ RDEPENDS:${PN} = "\
     python3-docker-compose \
     "
 
-RDEPENDS:${PN}:append:qcom-custom-bsp = "\
+RDEPENDS:${PN}:append:qcom-custom-distro = "\
     packagegroup-qcom-audio \
     packagegroup-qcom-camera \
     packagegroup-qcom-display \
