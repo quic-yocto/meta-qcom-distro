@@ -35,6 +35,7 @@ RDEPENDS:packagegroup-support-utils = "\
     can-utils \
     chrony \
     ethtool \
+    efivar \
     iproute2 \
     irqbalance \
     libatomic \
