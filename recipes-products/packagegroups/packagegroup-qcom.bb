@@ -20,6 +20,7 @@ RDEPENDS:${PN} = "\
     packagegroup-qcom-initscripts \
     packagegroup-support-utils \
     packagegroup-qcom-vm-host \
+    packagegroup-qcom-wifi \
     "
 
 RDEPENDS:${PN}:append:qcom-custom-bsp = "\
@@ -28,7 +29,6 @@ RDEPENDS:${PN}:append:qcom-custom-bsp = "\
     packagegroup-qcom-perf \
     packagegroup-qcom-ppat \
     packagegroup-qcom-securemsm \
-    packagegroup-qcom-wifi \
     "
 
 RDEPENDS:packagegroup-support-utils = "\
