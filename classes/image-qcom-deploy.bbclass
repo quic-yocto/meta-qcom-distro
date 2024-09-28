@@ -35,11 +35,18 @@ SYSTEMIMAGE_TARGET ?= "system.img"
 # use do_deploy_fixup task and copy them here.
 do_deploy_fixup[dirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
 do_deploy_fixup[cleandirs] = "${DEPLOY_DIR_IMAGE}/${IMAGE_BASENAME}"
-do_deploy_fixup[depends] += "virtual/bootbins:do_deploy"
-do_deploy_fixup[depends] += "qcom-gen-partition-bins:do_deploy"
 do_deploy_fixup[depends] += "esp-qcom-image:do_image_complete"
 do_deploy_fixup[depends] += "dtb-qcom-image:do_image_complete"
 do_deploy_fixup[deptask] = "do_image_complete"
+
+DEPLOYDEPENDS = " \
+    virtual/bootbins:do_deploy \
+    qcom-gen-partition-bins:do_deploy \
+    "
+# qcs8300 bootbins are not available
+DEPLOYDEPENDS:qcs8300 = ""
+
+do_deploy_fixup[depends] += "${DEPLOYDEPENDS}"
 
 do_deploy_fixup[nostamp] = "1"
 do_deploy_fixup () {
@@ -85,17 +92,23 @@ do_deploy_fixup () {
 
     #Copy gpt_main.bin
     for gmbf in ${DEPLOY_DIR_IMAGE}/gpt_main[0-9].bin; do
-        install -m 0644 $gmbf .
+        if [ -f "$gmbf" ]; then
+            install -m 0644 $gmbf .
+        fi
     done
 
     #Copy gpt_backup.bin
     for gpback in ${DEPLOY_DIR_IMAGE}/gpt_backup[0-9].bin; do
-        install -m 0644 $gpback .
+        if [ -f "$gpback" ]; then
+            install -m 0644 $gpback .
+        fi
     done
 
     #Copy rawprogram.xml
     for rawpg in ${DEPLOY_DIR_IMAGE}/rawprogram[0-9].xml; do
-        install -m 0644 $rawpg .
+        if [ -f "$rawpg" ]; then
+            install -m 0644 $rawpg .
+        fi
     done
 
     #Copy the .elf, .mbn files
@@ -135,7 +148,9 @@ do_deploy_fixup () {
     fi
 
     for patchfile in ${DEPLOY_DIR_IMAGE}/patch*.xml; do
-        install -m 0644 $patchfile .
+        if [ -f "$patchfile" ]; then
+            install -m 0644 $patchfile .
+        fi
     done
 }
 addtask do_deploy_fixup after do_image_complete before do_build
