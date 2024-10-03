@@ -13,6 +13,7 @@ inherit  ${@bb.utils.contains('DISTRO_FEATURES', 'selinux', 'selinux-image', '',
 REQUIRED_DISTRO_FEATURES = "pam systemd"
 
 CORE_IMAGE_BASE_INSTALL += " \
+    var-persist-mount \
     qcom-resize-partitions \
     packagegroup-filesystem-utils \
 "
