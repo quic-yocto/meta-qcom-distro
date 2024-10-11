@@ -23,7 +23,7 @@ RDEPENDS:${PN} = "\
     packagegroup-qcom-wifi \
     "
 
-RDEPENDS:${PN}:append:qcom-custom-bsp = "\
+RDEPENDS:${PN}:append:qcom-custom-distro = "\
     packagegroup-qcom-core \
     packagegroup-qcom-data \
     packagegroup-qcom-perf \
