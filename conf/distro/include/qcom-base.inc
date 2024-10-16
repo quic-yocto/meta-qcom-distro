@@ -77,13 +77,12 @@ PREFERRED_VERSION_rust-native ?= "${RUST_VERSION}"
 DISTRO_FEATURES_FILTER_NATIVE:append = " selinux"
 DISTRO_FEATURES_FILTER_NATIVESDK:append = " selinux"
 DISTRO_EXTRA_RDEPENDS:append = " ${@bb.utils.contains('DISTRO_FEATURES','selinux', 'packagegroup-selinux-minimal', '', d)}"
-PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-mls"
+PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-targeted"
 
 # Disable selinux in default
 DEFAULT_ENFORCING ?= "disabled"
 
-SELINUX_FILE_CONTEXTS_EXT4 = " -f ${IMAGE_ROOTFS}/etc/selinux/mls/contexts/files/file_contexts"
-EXTRA_IMAGECMD:ext4 += " ${@bb.utils.contains('DISTRO_FEATURES','selinux', '${SELINUX_FILE_CONTEXTS_EXT4}', '', d)}"
+IMAGE_CMD_TAR:append = "${@bb.utils.contains('DISTRO_FEATURES','selinux', ' --selinux', '', d)}"
 
 # Enable security compiler and linker flags.
 require qcom-security_flags.inc
