@@ -67,7 +67,7 @@ UNINATIVE_CHECKSUM[x86_64] ?= "1c35f09a75c4096749bbe1e009df4e3968cde151424062cf4
 INHERIT += "uninative"
 
 # GCC Version
-GCCVERSION = "11.4%"
+GCCVERSION = "11.5%"
 
 # Easily switch between rust versions just by changing RUST_VERSION variable
 RUST_VERSION ?= "1.73.0"
