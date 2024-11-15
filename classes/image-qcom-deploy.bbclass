@@ -149,6 +149,11 @@ do_deploy_fixup () {
         install -m 0644 ${DEPLOY_DIR_IMAGE}/zeros_5sectors.bin zeros_5sectors.bin
     fi
 
+    # copy zeros_1sector.bin
+    if [ -f ${DEPLOY_DIR_IMAGE}/zeros_1sector.bin ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/zeros_1sector.bin zeros_1sector.bin
+    fi
+
     for patchfile in ${DEPLOY_DIR_IMAGE}/patch*.xml; do
         if [ -f "$patchfile" ]; then
             install -m 0644 $patchfile .
