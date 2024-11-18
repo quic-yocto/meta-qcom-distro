@@ -2,7 +2,7 @@ SUMMARY = "Minimal image"
 
 LICENSE = "BSD-3-Clause-Clear"
 
-IMAGE_FEATURES += "splash tools-debug debug-tweaks enable-adbd read-only-rootfs"
+IMAGE_FEATURES += "splash tools-debug allow-empty-password empty-root-password allow-root-login post-install-logging enable-adbd read-only-rootfs"
 
 inherit core-image features_check extrausers image-adbd
 
