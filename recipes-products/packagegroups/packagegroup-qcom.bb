@@ -29,6 +29,7 @@ RDEPENDS:${PN}:append:qcom-custom-distro = "\
     packagegroup-qcom-perf \
     packagegroup-qcom-ppat \
     packagegroup-qcom-securemsm \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'cbsp-boot-utilities', '', d)} \
     "
 
 RDEPENDS:packagegroup-support-utils = "\
