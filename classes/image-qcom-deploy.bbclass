@@ -30,6 +30,8 @@ DEPENDS:append = " \
 BOOTIMAGE_TARGET   ?= "boot.img"
 SYSTEMIMAGE_TARGET ?= "system.img"
 
+SYSTEMIMAGE_TYPE = "${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'ota-ext4', 'ext4', d)}"
+
 # Place all files needed to flash the device in DEPLOY_DIR_NAME/IMAGE_BASENAME.
 # As they can't be directly installed into this path from actual recipes,
 # use do_deploy_fixup task and copy them here.
@@ -86,8 +88,8 @@ do_deploy_fixup () {
     fi
 
     # copy system.img
-    if [ -f ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.ext4 ]; then
-        install -m 0644 ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.ext4 ${SYSTEMIMAGE_TARGET}
+    if [ -f ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.${SYSTEMIMAGE_TYPE} ]; then
+        install -m 0644 ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.${SYSTEMIMAGE_TYPE} ${SYSTEMIMAGE_TARGET}
     fi
 
     #Copy gpt_main.bin

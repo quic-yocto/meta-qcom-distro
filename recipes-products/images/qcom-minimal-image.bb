@@ -2,19 +2,28 @@ SUMMARY = "Minimal image"
 
 LICENSE = "BSD-3-Clause-Clear"
 
-IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enable-adbd read-only-rootfs"
+IMAGE_FEATURES += "splash tools-debug allow-root-login post-install-logging enable-adbd"
 
-inherit core-image features_check extrausers image-adbd image-qcom-deploy
+inherit sota core-image features_check extrausers image-adbd image-qcom-deploy
+
+# selinux-image is inherited to utilize the selinux_set_labels API, to perform build-time context labeling.
+inherit  ${@bb.utils.contains('DISTRO_FEATURES', 'selinux', 'selinux-image', '', d)}
 
 # let's make sure we have a good image..
 REQUIRED_DISTRO_FEATURES = "pam systemd"
 
 CORE_IMAGE_BASE_INSTALL += " \
+    var-persist-mount \
     qcom-resize-partitions \
     packagegroup-filesystem-utils \
 "
 
-CORE_IMAGE_EXTRA_INSTALL += "overlayfs-qcom-paths"
+IMAGE_FSTYPES:remove = "${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'ostreepush garagesign garagecheck', ' ', d)}"
+SOTA_CLIENT = ""
+IMAGE_INSTALL:remove = "${@oe.utils.ifelse('${SOTA_CLIENT}' != 'aktualizr', 'aktualizr aktualizr-info', '')}"
+
+#Increase image size as a percentage overage to accomodate atleast two OSTree deployments
+IMAGE_OVERHEAD_FACTOR = "2.0"
 
 EXTRA_USERS_PARAMS = "\
     useradd -r -s /bin/false system; \

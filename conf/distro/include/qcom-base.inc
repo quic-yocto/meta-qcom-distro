@@ -16,7 +16,7 @@ TARGET_VENDOR = "-qcom"
 # to make the python below work. Local, site and auto.conf will override it.
 TCMODE ?= "default"
 
-DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization tpm"
+DISTRO_FEATURES:append = " pam overlayfs acl xattr selinux ptest security virtualization tpm usrmerge sota"
 
 # Use systemd init manager for system initialization.
 INIT_MANAGER = "systemd"
@@ -33,7 +33,7 @@ IMAGE_FSTYPES:remove = "tar.gz"
 
 # Pull in the initrd image by default
 INITRAMFS_IMAGE_BUNDLE ?= "1"
-INITRAMFS_IMAGE = "initramfs-qcom-image"
+INITRAMFS_IMAGE = "${@bb.utils.contains('DISTRO_FEATURES', 'sota', 'initramfs-ostree-image', 'initramfs-qcom-image', d)}"
 
 INHERIT += "buildhistory"
 INHERIT += "image-buildinfo"
@@ -54,20 +54,12 @@ BUILDHISTORY_COMMIT = "1"
 # docker-ce has been deprecated, so switch to docker-moby as the preferred provider.
 PREFERRED_PROVIDER_virtual/docker = "docker-moby"
 
-# Enable uninative for reuse -native sstate across hosts. This version is aligned to glibc 2.38.
-# While modifying, do ensure both uninative and libc version updates go hand in hand.
-UNINATIVE_MAXGLIBCVERSION = "2.38"
-UNINATIVE_VERSION = "4.3"
-
-UNINATIVE_URL = "http://downloads.yoctoproject.org/releases/uninative/${UNINATIVE_VERSION}/"
-UNINATIVE_CHECKSUM[aarch64] ?= "8df05f4a41455018b4303b2e0ea4eac5c960b5a13713f6dbb33dfdb3e32753ec"
-UNINATIVE_CHECKSUM[i686] ?= "bea76b4a97c9ba0077c0dd1295f519cd599dbf71f0ca1c964471c4cdb043addd"
-UNINATIVE_CHECKSUM[x86_64] ?= "1c35f09a75c4096749bbe1e009df4e3968cde151424062cf4aa3ed89db22b030"
-
+# Enable uninative for reuse -native sstate across hosts.
+require conf/distro/include/yocto-uninative.inc
 INHERIT += "uninative"
 
 # GCC Version
-GCCVERSION = "11.4%"
+GCCVERSION = "11.5%"
 
 # Easily switch between rust versions just by changing RUST_VERSION variable
 RUST_VERSION ?= "1.73.0"
@@ -85,13 +77,29 @@ PREFERRED_VERSION_rust-native ?= "${RUST_VERSION}"
 DISTRO_FEATURES_FILTER_NATIVE:append = " selinux"
 DISTRO_FEATURES_FILTER_NATIVESDK:append = " selinux"
 DISTRO_EXTRA_RDEPENDS:append = " ${@bb.utils.contains('DISTRO_FEATURES','selinux', 'packagegroup-selinux-minimal', '', d)}"
-PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-mls"
+PREFERRED_PROVIDER_virtual/refpolicy = "refpolicy-targeted"
 
 # Disable selinux in default
 DEFAULT_ENFORCING ?= "disabled"
 
-SELINUX_FILE_CONTEXTS_EXT4 = " -f ${IMAGE_ROOTFS}/etc/selinux/mls/contexts/files/file_contexts"
-EXTRA_IMAGECMD:ext4 += " ${@bb.utils.contains('DISTRO_FEATURES','selinux', '${SELINUX_FILE_CONTEXTS_EXT4}', '', d)}"
+IMAGE_CMD_TAR:append = "${@bb.utils.contains('DISTRO_FEATURES','selinux', ' --selinux', '', d)}"
 
 # Enable security compiler and linker flags.
 require qcom-security_flags.inc
+
+# Ostree variables
+OSTREE_BOOTLOADER ?= "none"
+OSTREE_SPLIT_BOOT = "1"
+OSTREE_LOADER_LINK = "0"
+BUILD_OTA_TARBALL = "1"
+OSTREE_KERNEL = "${EFI_LINUX_IMG}"
+OSTREE_KERNEL_ARGS_COMMON ?= "root=LABEL=otaroot rootfstype=ext4"
+OSTREE_KERNEL_ARGS ?= " ${OSTREE_KERNEL_ARGS_COMMON} ${KERNEL_CMDLINE_EXTRA} "
+OSTREE_KERNEL_ARGS:remove = "root=/dev/disk/by-partlabel/system"
+SOTA_CLIENT_PROV ?= ""
+OSTREE_DEPLOY_DEVICETREE = "0"
+OSTREE_DEVICETREE = "${KERNEL_DEVICETREE}"
+OSTREE_MULTI_DEVICETREE_SUPPORT = "0"
+
+# Set OPKGLIBDIR to /etc to support OSTree for OTA
+OPKGLIBDIR ?= "${@bb.utils.contains('DISTRO_FEATURES', 'sota', '/etc', '/var/lib', d)}"

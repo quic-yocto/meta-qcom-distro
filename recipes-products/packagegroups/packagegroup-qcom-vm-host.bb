@@ -15,6 +15,9 @@ PACKAGES = ' \
 RDEPENDS:packagegroup-qcom-vm-host = "\
     kvmtool \
     qemu \
+    "
+
+RDEPENDS:packagegroup-qcom-vm-host:append:qcom-base-distro = "\
     libvirt \
     libvirt-virsh \
     libvirt-libvirtd \

@@ -10,4 +10,7 @@ CORE_IMAGE_BASE_INSTALL += " \
 
 IMAGE_FEATURES += "ssh-server-openssh"
 
+# Permit root login without a password
+IMAGE_FEATURES += " debug-tweaks"
+
 IMAGE_LINGUAS = " "
