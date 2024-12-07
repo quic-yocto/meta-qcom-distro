@@ -45,9 +45,6 @@ DEPLOYDEPENDS = " \
     virtual/bootbins:do_deploy \
     qcom-gen-partition-bins:do_deploy \
     "
-# qcs8300 bootbins are not available
-DEPLOYDEPENDS:qcs8300 = ""
-
 do_deploy_fixup[depends] += "${DEPLOYDEPENDS}"
 
 do_deploy_fixup[nostamp] = "1"
